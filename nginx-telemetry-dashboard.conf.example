@@ -1,0 +1,20 @@
+# Use as an HTTPS virtual host on the AWS instance. Keep the Python dashboard
+# bound to 127.0.0.1:8787; Nginx is the only public entry point.
+server {
+    listen 443 ssl;
+    server_name telemetria.iot8.com.br;
+
+    # Configure the certificate paths generated for this hostname.
+    ssl_certificate /etc/letsencrypt/live/telemetria.iot8.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/telemetria.iot8.com.br/privkey.pem;
+
+    auth_basic "Telemetria";
+    auth_basic_user_file /etc/nginx/.htpasswd-telemetria;
+
+    location / {
+        proxy_pass http://127.0.0.1:8787;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
