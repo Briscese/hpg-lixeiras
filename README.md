@@ -1,4 +1,4 @@
-# hpg-lixeiras
+# GPS-lixeiras
 
 Rastreamento GPS de lixeiras.
 
