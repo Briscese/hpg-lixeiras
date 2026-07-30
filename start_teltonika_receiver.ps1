@@ -1,13 +1,12 @@
 $ErrorActionPreference = 'Stop'
 
-# Copy this file to start_teltonika_receiver.ps1 and replace the placeholders.
 $env:TB_MQTT_DEVICES = @{
-    'ATC700_IMEI' = 'ATC700_THINGSBOARD_ACCESS_TOKEN'
-    'TAT141_IMEI' = 'TAT141_THINGSBOARD_ACCESS_TOKEN'
+    '863238074508468' = '7kjwB9OXXU7ZLCgK0zGU' # ATC700
+    '863251072756898' = 'o6APqlE2ieAZwAYr9wSx' # TAT141
 } | ConvertTo-Json -Compress
 $env:TELTONIKA_DEVICE_NAMES = @{
-    'ATC700_IMEI' = 'ATC700'
-    'TAT141_IMEI' = 'TAT141'
+    '863238074508468' = 'ATC700'
+    '863251072756898' = 'TAT141'
 } | ConvertTo-Json -Compress
 $env:TB_MQTT_HOST = 'thingsboard.iot8.com.br'
 $env:TB_MQTT_PORT = '1883'

@@ -8,5 +8,5 @@ telemetry_dashboard*.log
 __pycache__/
 *.pyc
 
-# Local credentials
-start_teltonika_receiver.ps1
+
+
