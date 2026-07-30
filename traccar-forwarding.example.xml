@@ -1,0 +1,8 @@
+<!-- Add these entries inside <properties> in traccar.xml. -->
+<entry key='forward.type'>json</entry>
+<entry key='forward.url'>http://127.0.0.1:9000/traccar/position</entry>
+<entry key='forward.header'>X-Bridge-Key: REPLACE_WITH_A_LONG_RANDOM_SECRET</entry>
+<entry key='forward.retry.enable'>true</entry>
+<entry key='forward.retry.delay'>1000</entry>
+<entry key='forward.retry.count'>10</entry>
+<entry key='forward.retry.limit'>1000</entry>

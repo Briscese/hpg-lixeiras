@@ -1,0 +1,10 @@
+# Runtime data
+telemetria.db
+telemetria.db-*
+telemetria-*.csv
+__pycache__/
+*.pyc
+
+# Local credentials and integration secrets
+start_thingsboard_bridge.ps1
+traccar-forwarding.xml.snippet
