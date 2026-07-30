@@ -9,6 +9,4 @@ __pycache__/
 *.pyc
 
 # Local credentials
-start_thingsboard_bridge.ps1
 start_teltonika_receiver.ps1
-traccar-forwarding.xml.snippet

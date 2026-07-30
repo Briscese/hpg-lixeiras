@@ -8,7 +8,7 @@ Receives Teltonika Codec 8 and Codec 8 Extended packets directly by TCP, stores 
 
 ## Local setup
 
-1. Stop Traccar if it is using TCP port 5027.
+1. Stop Traccar if it is using TCP port 29626.
 2. Copy `start_teltonika_receiver.example.ps1` to `start_teltonika_receiver.ps1`.
 3. Fill the IMEI to ThingsBoard access-token mapping.
 4. Start the receiver:
@@ -18,6 +18,8 @@ Receives Teltonika Codec 8 and Codec 8 Extended packets directly by TCP, stores 
 ```
 
 The local SQLite database is created as `telemetria.db`. Use `export_teltonika_csv.ps1` to export direct Teltonika records.
+
+For direct AWS operation, configure each Teltonika tracker with `thingsboard.iot8.com.br` as its TCP server and port `29626`. The AWS Security Group and operating-system firewall must allow inbound TCP port `29626`.
 
 ## Dashboard
 

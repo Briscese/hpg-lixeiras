@@ -11,6 +11,6 @@ $env:TELTONIKA_DEVICE_NAMES = @{
 } | ConvertTo-Json -Compress
 $env:TB_MQTT_HOST = 'thingsboard.iot8.com.br'
 $env:TB_MQTT_PORT = '1883'
-$env:TELTONIKA_LISTEN_PORT = '5027'
+$env:TELTONIKA_LISTEN_PORT = '29626'
 
 python "$PSScriptRoot\teltonika_receiver.py"
