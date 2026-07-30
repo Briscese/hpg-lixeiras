@@ -1,1 +1,0 @@
-﻿id,received_at_ms,traccar_position_id,device_imei,device_name,fix_time,valid_gnss,latitude,longitude,altitude,speed,course,accuracy,telemetry_json,raw_payload_json,thingsboard_published,thingsboard_error

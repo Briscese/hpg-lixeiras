@@ -2,19 +2,19 @@
 
 Rastreamento GPS de lixeiras.
 
-## Teltonika to ThingsBoard bridge
+## Teltonika to ThingsBoard receiver
 
-Receives JSON positions forwarded by Traccar, stores valid GNSS positions in SQLite, and publishes telemetry to ThingsBoard MQTT.
+Receives Teltonika Codec 8 and Codec 8 Extended packets directly by TCP, stores every decoded packet in SQLite, and publishes telemetry to ThingsBoard MQTT. The current scope is ATC700 and TAT141.
 
 ## Local setup
 
-1. Copy `start_thingsboard_bridge.example.ps1` to `start_thingsboard_bridge.ps1`.
-2. Fill the IMEI to ThingsBoard access-token mapping and integration secret.
-3. Configure Traccar using `traccar-forwarding.example.xml` with the same secret.
-4. Start the bridge:
+1. Stop Traccar if it is using TCP port 5027.
+2. Copy `start_teltonika_receiver.example.ps1` to `start_teltonika_receiver.ps1`.
+3. Fill the IMEI to ThingsBoard access-token mapping.
+4. Start the receiver:
 
 ```powershell
-.\start_thingsboard_bridge.ps1
+.\start_teltonika_receiver.ps1
 ```
 
-The local SQLite database is created as `telemetria.db`. Use the CSV export script to create an export of saved records.
+The local SQLite database is created as `telemetria.db`. Use `export_teltonika_csv.ps1` to export direct Teltonika records.
