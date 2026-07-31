@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Localização dos Dispositivos</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root { font-family: Arial, sans-serif; color: #162438; background: #f1f4f7; }
+    body { margin: 0; }
+    header { background: #073b75; color: #fff; padding: 18px 24px; }
+    header h1 { margin: 0; font-size: 22px; }
+    header p { margin: 5px 0 0; color: #d5e3f2; font-size: 14px; }
+    main { max-width: 1280px; margin: 0 auto; padding: 20px 24px; }
+    .layout { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 16px; }
+    .panel { background: #fff; border: 1px solid #d6dee7; border-radius: 6px; }
+    .devices { padding: 14px; }
+    .devices h2 { margin: 0 0 12px; font-size: 15px; }
+    .device { width: 100%; display: grid; grid-template-columns: 12px 1fr; gap: 10px; text-align: left; padding: 11px 8px; border: 0; border-top: 1px solid #e4e9ee; background: #fff; cursor: pointer; }
+    .device:hover, .device.active { background: #eef6ff; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 3px; }
+    .device strong, .device small { display: block; }
+    .device small { margin-top: 3px; color: #607085; font-size: 12px; }
+    .map-panel { min-height: 580px; overflow: hidden; }
+    #map { height: 580px; }
+    .details { margin-top: 16px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 11px 14px; border-bottom: 1px solid #e3e8ed; text-align: left; font-size: 13px; }
+    th { color: #52647a; background: #f6f8fa; font-size: 12px; }
+    .open-map { display: inline-block; color: #075da9; text-decoration: none; font-weight: 600; }
+    .leaflet-popup-content strong { font-size: 14px; }
+    @media (max-width: 760px) { main { padding: 14px; } .layout { grid-template-columns: 1fr; } .map-panel, #map { min-height: 430px; height: 430px; } .devices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 8px; } .devices h2 { grid-column: 1 / -1; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Localização dos Dispositivos</h1>
+    <p>Trilhas de 31/07/2026, das 08:00 às 12:00.</p>
+  </header>
+  <main>
+    <section class="layout">
+      <aside class="panel devices">
+        <h2>Dispositivos e referência</h2>
+        <div id="device-list"></div>
+      </aside>
+      <section class="panel map-panel"><div id="map" aria-label="Mapa de localização dos dispositivos"></div></section>
+    </section>
+    <section class="panel details">
+      <table>
+        <thead><tr><th>Referência</th><th>Último registro</th><th>Latitude</th><th>Longitude</th><th>Mapa</th></tr></thead>
+        <tbody id="details"></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="tracks.js"></script>
+  <script>
+    const points = trackData.map(track => {
+      const [time, lat, lng] = track.points[track.points.length - 1];
+      return { ...track, time, lat, lng };
+    });
+
+    const map = L.map('map', { zoomControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const markers = [];
+    const trackLayers = {};
+    const list = document.querySelector('#device-list');
+    const details = document.querySelector('#details');
+    const mapUrl = point => `https://www.google.com/maps?q=${point.lat},${point.lng}`;
+    const pinIcon = color => L.divIcon({ className: '', html: `<span style="display:block;width:18px;height:18px;border-radius:50% 50% 50% 0;background:${color};border:2px solid #fff;box-shadow:0 1px 4px #34495e;transform:rotate(-45deg)"></span>`, iconSize: [22, 22], iconAnchor: [11, 22], popupAnchor: [0, -22] });
+
+    function selectPoint(index) {
+      const point = points[index];
+      if (!map.hasLayer(trackLayers[point.name])) {
+        map.addLayer(trackLayers[point.name]);
+      }
+      map.flyTo([point.lat, point.lng], 17, { duration: 0.6 });
+      markers[index].openPopup();
+      document.querySelectorAll('.device').forEach((element, itemIndex) => element.classList.toggle('active', itemIndex === index));
+    }
+
+    points.forEach((point, index) => {
+      const layer = L.layerGroup().addTo(map);
+      trackLayers[point.name] = layer;
+      L.polyline(point.points.map(([, lat, lng]) => [lat, lng]), {
+        color: point.color, weight: 4, opacity: 0.82, dashArray: point.dashArray
+      }).addTo(layer);
+      point.points.forEach(([time, lat, lng], pointIndex) => {
+        L.circleMarker([lat, lng], { radius: 4, color: point.color, fillColor: '#fff', fillOpacity: 0.95, weight: 2 })
+          .bindPopup(`<strong>${point.name}</strong><br>Ponto ${pointIndex + 1} de ${point.points.length}<br>${time}<br>${lat.toFixed(7)}, ${lng.toFixed(7)}`)
+          .addTo(layer);
+      });
+      const marker = L.marker([point.lat, point.lng], { icon: pinIcon(point.color) })
+        .bindPopup(`<strong>${point.name}</strong><br>${point.detail}<br>${point.time}<br>${point.points.length} registros exibidos<br><a href="${mapUrl(point)}" target="_blank" rel="noreferrer">Abrir no Google Maps</a>`)
+        .addTo(layer);
+      markers.push(marker);
+
+      const button = document.createElement('button');
+      button.className = 'device';
+      button.innerHTML = `<span class="dot" style="background:${point.color}"></span><span><strong>${point.name}</strong><small>${point.detail}<br>${point.time} · ${point.points.length} pontos</small></span>`;
+      button.addEventListener('click', () => selectPoint(index));
+      list.appendChild(button);
+
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${point.name}<br><small>${point.detail} · ${point.points.length} pontos</small></td><td>${point.time}</td><td>${point.lat.toFixed(7)}</td><td>${point.lng.toFixed(7)}</td><td><a class="open-map" href="${mapUrl(point)}" target="_blank" rel="noreferrer">Abrir</a></td>`;
+      details.appendChild(row);
+    });
+
+    L.control.layers(null, trackLayers, { collapsed: false, position: 'topright' }).addTo(map);
+    map.fitBounds(L.latLngBounds(trackData.flatMap(track => track.points.map(([, lat, lng]) => [lat, lng]))), { padding: [45, 45], maxZoom: 16 });
+  </script>
+</body>
+</html>

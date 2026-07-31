@@ -5,8 +5,8 @@ telemetria-*.csv
 teltonika-*.csv
 teltonika_receiver*.log
 telemetry_dashboard*.log
+public_map*.log
 __pycache__/
 *.pyc
-
 
 
