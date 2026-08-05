@@ -5,15 +5,23 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 DATABASE_PATH = Path(os.getenv("TELEMETRY_DB_PATH", Path(__file__).with_name("telemetria.db")))
 HOST = os.getenv("TELEMETRY_DASHBOARD_HOST", "127.0.0.1")
 PORT = int(os.getenv("TELEMETRY_DASHBOARD_PORT", "8787"))
+
+# O rastreador envia epoch UTC; o servidor AWS normalmente roda em UTC, entao o
+# fuso de exibicao precisa ser explicito e nao herdado da maquina.
+try:
+    DISPLAY_TIMEZONE = ZoneInfo(os.getenv("TELEMETRY_TIMEZONE", "America/Sao_Paulo"))
+except ZoneInfoNotFoundError:
+    DISPLAY_TIMEZONE = UTC
 
 HTML = """<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -45,7 +53,8 @@ def database_rows(sql: str, parameters: tuple[object, ...] = ()) -> list[sqlite3
 
 
 def format_time(timestamp: int) -> str:
-    return datetime.fromtimestamp(timestamp / 1000).strftime("%d/%m/%Y %H:%M:%S")
+    moment = datetime.fromtimestamp(timestamp / 1000, UTC).astimezone(DISPLAY_TIMEZONE)
+    return moment.strftime("%d/%m/%Y %H:%M:%S")
 
 
 class DashboardHandler(BaseHTTPRequestHandler):

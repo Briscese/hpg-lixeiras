@@ -9,6 +9,7 @@ import socket
 import socketserver
 import sqlite3
 import struct
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -45,8 +46,13 @@ ATTRIBUTE_NAMES: dict[int, tuple[str, float | None]] = {
 }
 
 
+def open_database() -> sqlite3.Connection:
+    """Conexao dedicada. `with closing(...)` fecha; `with connection` faz commit."""
+    return sqlite3.connect(DATABASE_PATH, timeout=15)
+
+
 def initialize_database() -> None:
-    with sqlite3.connect(DATABASE_PATH) as connection:
+    with closing(open_database()) as connection, connection:
         connection.execute("PRAGMA journal_mode=WAL")
         connection.execute(
             """
@@ -205,7 +211,7 @@ def telemetry_for(imei: str, record: dict[str, Any]) -> dict[str, Any]:
 
 def save_packet(imei: str, address: str, raw: bytes, codec: int, records: list[dict[str, Any]]) -> int:
     digest = hashlib.sha256(raw).hexdigest()
-    with sqlite3.connect(DATABASE_PATH, timeout=15) as connection:
+    with closing(open_database()) as connection, connection:
         cursor = connection.execute(
             """
             INSERT OR IGNORE INTO teltonika_packets (
@@ -225,7 +231,7 @@ def save_packet(imei: str, address: str, raw: bytes, codec: int, records: list[d
 
 
 def save_record(packet_id: int, index: int, imei: str, record: dict[str, Any], telemetry: dict[str, Any]) -> int:
-    with sqlite3.connect(DATABASE_PATH, timeout=15) as connection:
+    with closing(open_database()) as connection, connection:
         cursor = connection.execute(
             """
             INSERT OR IGNORE INTO teltonika_records (
@@ -251,7 +257,7 @@ def save_record(packet_id: int, index: int, imei: str, record: dict[str, Any], t
 
 
 def update_publish_status(packet_id: int, record_id: int, published: bool, error: str | None = None) -> None:
-    with sqlite3.connect(DATABASE_PATH, timeout=15) as connection:
+    with closing(open_database()) as connection, connection:
         connection.execute(
             "UPDATE teltonika_packets SET thingsboard_published = ?, thingsboard_error = ? WHERE id = ?",
             (int(published), error, packet_id),
@@ -333,7 +339,16 @@ def read_exact(stream: Any, size: int) -> bytes:
 
 
 class TeltonikaHandler(socketserver.StreamRequestHandler):
+    # Encerra conexoes ociosas para nao acumular threads presas indefinidamente.
+    timeout = 600
+
     def handle(self) -> None:
+        try:
+            self.handle_device()
+        except (ConnectionError, OSError, ValueError, RuntimeError) as error:
+            print(f"Conexao {self.client_address[0]} encerrada: {error}", flush=True)
+
+    def handle_device(self) -> None:
         imei_length = struct.unpack("!H", read_exact(self.rfile, 2))[0]
         if not 10 <= imei_length <= 32:
             raise ValueError("Comprimento de IMEI invalido")
